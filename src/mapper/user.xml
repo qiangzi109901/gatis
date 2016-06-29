@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sql id="user">
+	<insert id="insert">
+		insert into
+			user (
+				username,
+				password,
+				nickname,
+				gender,
+				age
+			)
+			value (
+				{{.Username | q}},
+				{{.Password | q}},
+				{{.Nickname},
+				{{.Gender}},
+				{{.Age}}
+			)
+	</insert>
+
+	<update id="update">
+		update
+			user
+		set 
+			username = {{.Username | q}},
+			password = {{.Password | q}},
+			nickname = {{.Nickname | q}},
+			gender = {{.Gender | q}},
+			age = {{.Age}}
+		where
+			id = {{.Id}}
+	</update>
+
+	<select id="get">
+		select
+			*
+		from
+			user
+		where
+			id = {{.Id}}
+	</select>
+
+	<select id="delete">
+		delete from
+			user
+		where
+			id = {{.Id}}
+	</select>
+</sql>

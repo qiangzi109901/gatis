@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sql id="course">
+    <insert id="insert">
+        insert into
+            t_course (
+                id,
+                name
+            )
+            value (
+                {{.Id | q}},
+                {{.Name | q}}
+            )
+    </insert>
+    <update id="update">
+        update
+            t_course
+        set
+            name = {{.Name | q}}
+        where
+            id = {{.Id | q}}
+    </update>
+
+    <delete id="delete">
+        delete from
+            t_course
+        where
+            id =
+    </delete>
+</sql>
