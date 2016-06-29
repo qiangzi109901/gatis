@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 )
 
+
 type ModelItem struct {
 	Model  string
 	Tag    string
@@ -18,11 +19,18 @@ type ModelItem struct {
 	Tplsql string
 }
 
+
+var Tpls map[string]*ModelItem
+
+func init() {
+	Tpls = make(map[string]*ModelItem)
+}
+
 func (this *ModelItem) String() string {
 	return fmt.Sprintf("{\n\tModel : %s \n\tMethod : %s \n\tTplsql : %s \n}\n", this.Model, this.Method, this.Tplsql)
 }
 
-func (this *ModelItem) init() {
+func (this *ModelItem) initItem() {
 	this.Attrs = make(map[string]string)
 }
 
@@ -32,31 +40,26 @@ func (this *ModelItem) initMethod(model, tag string) {
 	this.Tag = tag
 }
 
-//缓存全部sql模板
-var Tpls map[string]ModelItem
 
 func FindMethod(model, method string) *ModelItem {
-	for _, item := range Tpls {
-		if item.Model == model && item.Method == method {
-			return &item
-		}
+	if Tpls == nil {
+		return nil
 	}
-	return nil
+	return Tpls[model+"_"+method]
 }
 
 func pushMethod(item *ModelItem) {
-	Tpls = append(Tpls, *item)
 	key := item.Model + "_" + item.Method
-	Tpls[key] = *item
+	//Tpls[key] = item
+
+	if Tpls == nil {
+		Tpls = make(map[string]*ModelItem)
+	}
+	Ps(key,len(Tpls),Tpls == nil)
+
+	Tpls[key] = item
 }
 
-
-var tplFuncs template.FuncMap
-
-func init() {
-	Tpls = make(map[string]ModelItem)
-	tplFuncs = Tplfuncs
-}
 
 func Analysis_sql_file(filePath string) {
 	file, err := os.Open(filePath)
@@ -71,7 +74,7 @@ func Analysis_sql_file(filePath string) {
 	modelName := ""
 	isEnterElement := false
 	modelItem := new(ModelItem)
-	modelItem.init()
+	modelItem.initItem()
 	for {
 		t, err := xmldoc.Token()
 		if err != nil {
@@ -116,7 +119,7 @@ func Analysis_sql_file(filePath string) {
 			if tc != "" && isEnterElement {
 				modelItem.Tplsql = c
 				pushMethod(modelItem)
-				modelItem.init()
+				modelItem.initItem()
 			}
 
 		case xml.EndElement:
@@ -142,7 +145,7 @@ func Analysis_sql_file(filePath string) {
 
 func Render(tpl string, data interface{}) string {
 
-	t, err := template.New("new").Funcs(tplFuncs).Parse(tpl)
+	t, err := template.New("new").Funcs(Tplfuncs).Parse(tpl)
 	if err != nil {
 		panic(err)
 	}

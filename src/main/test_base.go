@@ -1,10 +1,9 @@
 package main
 
 import (
-
 	"fmt"
-	"gatis/src/models"
 	"reflect"
+	"gatis/src/gatis"
 )
 
 func init() {
@@ -18,9 +17,9 @@ func main() {
 func test_insert(){
 
 	data := make(map[string]interface{})
-	data["Id"] = "100"
+	data["Id"] = "200"
 	data["Name"] = "golang"
-	rt := models.Execute("course","insert", data)
+	rt := gatis.Execute("course","insert", data)
 
 	////rt := models.Execute("course", "update", data)
 	//

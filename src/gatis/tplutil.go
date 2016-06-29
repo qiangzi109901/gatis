@@ -1,7 +1,8 @@
 package gatis
 
+import "text/template"
 
-var Tplfuncs map[string]interface{}
+var Tplfuncs template.FuncMap
 
 func init() {
 
