@@ -10,30 +10,16 @@ import (
 )
 
 func main() {
-
 	db, err := sql.Open("mysql", "root:123456@/test")
-
 	if err != nil {
 		panic(err)
 	}
-
-	defer db.Close()
-
-	err = db.Ping()
-
-	if err != nil {
-		panic(err)
-	}
-
-
 	insert(db)
-
+	query(db)
 }
 
-
-
-
 func insert(db *sql.DB) {
+	db.Ping()
 	stmt, err := db.Prepare("insert into t_course(id,name) value(?,?)")
 	defer stmt.Close()
 
@@ -41,39 +27,36 @@ func insert(db *sql.DB) {
 		panic(err)
 	}
 
-	stmt.Exec(1, "java")
-	stmt.Exec(2, "golang")
+	rs,err := stmt.Exec(1500, "java")
+	if err != nil {
+		panic(err)
+		return
+	}
+	if a,_ := rs.RowsAffected(); a > 0 {
 
-
-	//queryWithCourse(db)
-	queryAndAssignMap(db)
-	queryAndAssignCourse(db)
+		b,_ := rs.LastInsertId()
+		fmt.Println("插入成功", b)
+		return
+	}
+	fmt.Println("插入失败")
 }
 
 
 func query(db *sql.DB) {
-
 	rows, err := db.Query("select * from t_course")
-
 	if err != nil {
 		panic(err)
 	}
-
 	defer rows.Close()
-
 	var id int
 	var name string
-
 	for rows.Next() {
 		err = rows.Scan(&id, &name)
-
 		if err != nil {
 			panic(err)
 		}
-
 		fmt.Println(id, name)
 	}
-
 }
 
 type Course struct {
@@ -88,13 +71,6 @@ func (this Course) String() string {
 func (this Course) Hello(name string) {
 	fmt.Println("hello ", name, ", i'm ", this.Name)
 }
-
-
-
-
-
-
-
 
 
 

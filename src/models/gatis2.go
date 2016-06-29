@@ -19,7 +19,7 @@ type ModelItem struct {
 	Tplsql string
 }
 
-var Tpls map[string]ModelItem
+var Tpls map[string]*ModelItem
 
 func init() {
 	initTpls()
@@ -27,33 +27,33 @@ func init() {
 
 func initTpls(){
 	if Tpls == nil {
-		Tpls = make(map[string]ModelItem)
+		Tpls = make(map[string]*ModelItem)
 	}
 }
 
-func (this ModelItem) String() string {
+func (this *ModelItem) String() string {
 	return fmt.Sprintf("{\n\tModel : %s \n\tTag : %s \n\tMethod : %s \n\tTplsql : %s \n}\n", this.Model, this.Tag, this.Method, this.Tplsql)
 }
 
-func initItem(this *ModelItem)  {
+func (this *ModelItem) initItem() {
 	this.Attrs = make(map[string]string)
 }
 
-func  initMethod(this *ModelItem, model, tag string) {
+func (this *ModelItem) initMethod(model, tag string) {
 	this.Attrs = make(map[string]string)
 	this.Model = model
 	this.Tag = tag
 }
 
 
-func FindMethod(model, method string) ModelItem {
+func FindMethod(model, method string) *ModelItem {
 	if Tpls == nil {
-		return ModelItem{}
+		return nil
 	}
 	return Tpls[model+"_"+method]
 }
 
-func pushMethod(item ModelItem) {
+func pushMethod(item *ModelItem) {
 	key := item.Model + "_" + item.Method
 	initTpls()
 	Tpls[key] = item
@@ -63,6 +63,7 @@ func Analysis_sql_file(filePath string) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		abspath,_ := filepath.Abs(filePath)
+		Ps(abspath)
 		Log.Error("文件路径%s不存在\n", abspath)
 		return
 	}
@@ -71,8 +72,8 @@ func Analysis_sql_file(filePath string) {
 	xmldoc := xml.NewDecoder(file)
 	modelName := ""
 	isEnterElement := false
-	modelItem := ModelItem{}
-	initItem(&modelItem)
+	modelItem := new(ModelItem)
+	modelItem.initItem()
 	for {
 		t, err := xmldoc.Token()
 		if err != nil {
@@ -95,7 +96,8 @@ func Analysis_sql_file(filePath string) {
 					}
 				}
 			} else if tname != "" {
-				initMethod(&modelItem,modelName, name)
+				Ps("tag", name)
+				modelItem.initMethod(modelName, name)
 
 				for _, attr := range token.Attr {
 					attrName := attr.Name.Local
@@ -117,7 +119,7 @@ func Analysis_sql_file(filePath string) {
 			if tc != "" && isEnterElement {
 				modelItem.Tplsql = c
 				pushMethod(modelItem)
-				initItem(&modelItem)
+				modelItem.initItem()
 			}
 
 		case xml.EndElement:

@@ -24,6 +24,22 @@
         delete from
             t_course
         where
-            id =
+            id = {{.Id | q}}
     </delete>
+
+    <select id="queryAll">
+        select
+            *
+        from
+            t_course
+    </select>
+
+    <select id="get">
+        select
+            *
+        from
+            t_course
+        where
+            id = {{.Id | q}}
+    </select>
 </sql>

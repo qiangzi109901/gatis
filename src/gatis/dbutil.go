@@ -11,7 +11,7 @@ import (
 //创建基类与方法
 
 type GatisModel struct {
-	Id int
+	Id int64
 	GmtCreate time.Time
 	GmtUpdate time.Time
 }
@@ -28,17 +28,16 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	Analysis_sql_file("go/src/gatis/src/mapper/course.xml")
+	Analysis_sql_file("src/gatis/src/mapper/course.xml")
 }
 
 func getRealSql(model string, method string, data interface{}) (tag string,sql string,attrs map[string]string){
 
 	item := FindMethod(model, method)
-	Ps(item)
-	//if item == nil {
-	//	panic("no such model : " + model + ",method : " + method +" defined,please check your sql xml")
-	//}
-	return
+	if item.Model == "" {
+		panic("no such model : " + model + ",method : " + method +" defined,please check your sql xml")
+		return "","",nil
+	}
 	tplsql := item.Tplsql
 	tag = item.Tag
 	sql = Render(tplsql, data)
@@ -47,28 +46,31 @@ func getRealSql(model string, method string, data interface{}) (tag string,sql s
 }
 
 func Execute(model string, method string, data interface{}) interface{} {
-	db.Ping()
+
 	tag, sql, attrs := getRealSql(model, method,data)
 
-	Ps(tag == "")
+	if tag == "" {
+		return nil
+	}
 
+	db.Ping()
 	Log.Info("执行sql:\n %s", sql)
 	switch tag {
 	case "insert":
-		return insert(db, sql, attrs)
+		return insert( sql, attrs)
 	case "update":
-		return update(db, sql, attrs)
+		return update( sql, attrs)
 	case "delete":
-		return del(db, sql, attrs)
+		return del( sql, attrs)
 	case "select":
-		return query(db, method, sql, attrs)
+		return query( method, sql, attrs)
 	default:
 		panic("非法标签" + tag)
 		return nil
 	}
 }
 
-func insert(db *sql.DB, sql string, attrs map[string]string) int64{
+func insert( sql string, attrs map[string]string) int64{
 
 	rst,err := db.Exec(sql)
 
@@ -88,7 +90,7 @@ func insert(db *sql.DB, sql string, attrs map[string]string) int64{
 	return -1
 }
 
-func update(db *sql.DB, sql string, attrs map[string]string) int64{
+func update( sql string, attrs map[string]string) int64{
 	rst,err := db.Exec(sql)
 	if err != nil {
 		panic("execute sql error")
@@ -103,7 +105,7 @@ func update(db *sql.DB, sql string, attrs map[string]string) int64{
 }
 
 
-func del(db *sql.DB, sql string, attrs map[string]string) int64{
+func del( sql string, attrs map[string]string) int64{
 	rst,err := db.Exec(sql)
 	if err != nil {
 		panic("execute sql error")
@@ -114,7 +116,7 @@ func del(db *sql.DB, sql string, attrs map[string]string) int64{
 	return -1
 }
 
-func query(db *sql.DB, method string, sql string, attrs map[string]string) interface{}{
+func query( method string, sql string, attrs map[string]string) interface{}{
 	rows,err := db.Query(sql)
 	if err != nil {
 		panic("execute sql error")
@@ -146,7 +148,6 @@ func getMapOne(m map[string]string) interface{}{
 	return m
 }
 
-
 func queryResultWithOne(rows *sql.Rows) (record map[string]string){
 	defer rows.Close()
 	//获取列
@@ -173,8 +174,6 @@ func queryResultWithOne(rows *sql.Rows) (record map[string]string){
 
 func queryResultWithMore(rows *sql.Rows) (records []map[string]string) {
 	defer rows.Close()
-
-
 	//获取列
 	columns,_ := rows.Columns()
 	lens := len(columns)
